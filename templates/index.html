@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Absensi Face ID</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0c10;
+        --surface: #111318;
+        --surface2: #181c24;
+        --border: #1e2330;
+        --border2: #252b3a;
+        --accent: #3b82f6;
+        --accent2: #1d4ed8;
+        --green: #22c55e;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+        --text: #e8eaf0;
+        --text2: #8b93a8;
+        --text3: #505870;
+        --mono: "JetBrains Mono", monospace;
+        --sans: "Space Grotesk", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--sans);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+      }
+
+      /* ── SIDEBAR ── */
+      .sidebar {
+        width: 220px;
+        min-height: 100vh;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 100;
+      }
+
+      .sidebar-logo {
+        padding: 24px 20px 20px;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-logo .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--accent);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+      .sidebar-logo h1 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.3;
+        letter-spacing: 0.02em;
+      }
+      .sidebar-logo p {
+        font-size: 10px;
+        color: var(--text3);
+        font-family: var(--mono);
+        margin-top: 2px;
+        letter-spacing: 0.05em;
+      }
+
+      .sidebar-nav {
+        padding: 12px 10px;
+        flex: 1;
+      }
+      .nav-label {
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        padding: 8px 10px 4px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--text2);
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s;
+        margin-bottom: 2px;
+      }
+      .nav-item:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--accent);
+      }
+      .nav-item .icon {
+        font-size: 15px;
+        width: 20px;
+        text-align: center;
+      }
+
+      .sidebar-status {
+        padding: 14px 16px;
+        border-top: 1px solid var(--border);
+        font-family: var(--mono);
+      }
+      .status-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--text3);
+        margin-right: 6px;
+        animation: pulse 2s infinite;
+      }
+      .status-dot.online {
+        background: var(--green);
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .status-text {
+        font-size: 10px;
+        color: var(--text3);
+      }
+
+      /* ── MAIN CONTENT ── */
+      .main {
+        margin-left: 220px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .topbar {
+        height: 56px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .topbar-title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .topbar-right {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .time-display {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--accent);
+        background: rgba(59, 130, 246, 0.08);
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+
+      /* ── PAGES ── */
+      .page {
+        display: none;
+        padding: 24px;
+      }
+      .page.active {
+        display: block;
+      }
+
+      /* ── CARDS ── */
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+        transition: border-color 0.2s;
+      }
+      .stat-card:hover {
+        border-color: var(--border2);
+      }
+      .stat-card .stat-label {
+        font-size: 11px;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .stat-card .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .stat-card .stat-sub {
+        font-size: 11px;
+        color: var(--text3);
+      }
+      .stat-card.green .stat-value {
+        color: var(--green);
+      }
+      .stat-card.red .stat-value {
+        color: var(--red);
+      }
+      .stat-card.yellow .stat-value {
+        color: var(--yellow);
+      }
+      .stat-card.blue .stat-value {
+        color: var(--accent);
+      }
+
+      /* ── ABSENSI BUTTONS ── */
+      .absensi-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .absensi-panel h2 {
+        grid-column: 1/-1;
+        font-size: 13px;
+        color: var(--text2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .btn-absen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 20px 24px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-family: var(--sans);
+        font-size: 15px;
+        font-weight: 600;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-absen:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-absen .btn-icon {
+        font-size: 22px;
+      }
+      .btn-absen .btn-text {
+        text-align: left;
+      }
+      .btn-absen .btn-text small {
+        display: block;
+        font-size: 11px;
+        font-weight: 400;
+        opacity: 0.7;
+      }
+
+      .btn-masuk {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+      }
+      .btn-masuk:hover:not(:disabled) {
+        background: linear-gradient(135deg, #047857, #059669);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 24px rgba(16, 185, 129, 0.35);
+      }
+      .btn-keluar {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
+      }
+      .btn-keluar:hover:not(:disabled) {
+        background: linear-gradient(135deg, #b91c1c, #dc2626);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 24px rgba(239, 68, 68, 0.35);
+      }
+
+      /* ── TABLE ── */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+      .card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .card-subtitle {
+        font-size: 11px;
+        color: var(--text3);
+        margin-top: 1px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        padding: 10px 16px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 12px 16px;
+        font-size: 13px;
+        color: var(--text2);
+        border-bottom: 1px solid rgba(30, 35, 48, 0.5);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.015);
+      }
+      td .name {
+        font-weight: 500;
+        color: var(--text);
+      }
+
+      /* ── BADGES ── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .badge-green {
+        background: rgba(34, 197, 94, 0.12);
+        color: var(--green);
+      }
+      .badge-red {
+        background: rgba(239, 68, 68, 0.12);
+        color: var(--red);
+      }
+      .badge-yellow {
+        background: rgba(245, 158, 11, 0.12);
+        color: var(--yellow);
+      }
+      .badge-gray {
+        background: rgba(100, 116, 139, 0.12);
+        color: var(--text3);
+      }
+      .badge-blue {
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--accent);
+      }
+
+      /* ── FORM ── */
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .form-group.full {
+        grid-column: 1/-1;
+      }
+      .form-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .form-input,
+      .form-select {
+        background: var(--bg);
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-family: var(--sans);
+        font-size: 13px;
+        color: var(--text);
+        transition: border-color 0.15s;
+        outline: none;
+      }
+      .form-input:focus,
+      .form-select:focus {
+        border-color: var(--accent);
+      }
+      .form-select option {
+        background: var(--surface2);
+      }
+
+      .btn {
+        padding: 9px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-family: var(--sans);
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.15s;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+      .btn-primary:hover {
+        background: var(--accent2);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--text2);
+        border: 1px solid var(--border2);
+      }
+      .btn-ghost:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .btn-danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--red);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+      .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.2);
+      }
+      .btn-success {
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--green);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+      }
+      .btn-success:hover {
+        background: rgba(34, 197, 94, 0.2);
+      }
+
+      .btn-sm {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+
+      /* ── MODAL ── */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border2);
+        border-radius: 14px;
+        padding: 28px;
+        width: 480px;
+        max-width: 95vw;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .modal-title {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        color: var(--text3);
+        cursor: pointer;
+        font-size: 20px;
+        line-height: 1;
+        padding: 4px;
+      }
+      .modal-close:hover {
+        color: var(--text);
+      }
+      .modal-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+
+      /* ── TOAST ── */
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .toast {
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+        border-radius: 10px;
+        padding: 12px 16px;
+        min-width: 280px;
+        max-width: 360px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        animation: slideIn 0.25s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(40px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .toast.success {
+        border-color: rgba(34, 197, 94, 0.3);
+      }
+      .toast.error {
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .toast-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .toast-content .toast-title {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .toast-content .toast-msg {
+        font-size: 12px;
+        color: var(--text2);
+        line-height: 1.4;
+      }
+
+      /* ── LOADING ── */
+      .loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 300;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .loading-overlay.open {
+        display: flex;
+      }
+      .spinner {
+        width: 44px;
+        height: 44px;
+        border: 3px solid var(--border2);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        font-size: 14px;
+        color: var(--text2);
+      }
+
+      /* ── MISC ── */
+      .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--text3);
+      }
+      .empty-state .empty-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+      }
+      .empty-state p {
+        font-size: 13px;
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      .flex {
+        display: flex;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .gap-2 {
+        gap: 8px;
+      }
+      .ml-auto {
+        margin-left: auto;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .section-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 20px 0;
+      }
+
+      input[type="date"] {
+        color-scheme: dark;
+      }
+
+      .confidence-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bar-track {
+        flex: 1;
+        height: 4px;
+        background: var(--border2);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">👁</div>
+        <h1>Sistem Absensi<br />Face ID</h1>
+        <p>v1.0 · LOCAL</p>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-label">Menu</div>
+        <div class="nav-item active" onclick="showPage('dashboard')">
+          <span class="icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('absensi')">
+          <span class="icon">👤</span> Absensi
+        </div>
+        <div class="nav-item" onclick="showPage('peserta')">
+          <span class="icon">👥</span> Peserta
+        </div>
+        <div class="nav-item" onclick="showPage('rekap')">
+          <span class="icon">📋</span> Rekap Harian
+        </div>
+        <div class="nav-item" onclick="showPage('bulanan')">
+          <span class="icon">📅</span> Rekap Bulanan
+        </div>
+      </nav>
+      <div class="sidebar-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Memeriksa...</span>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="topbar">
+        <span class="topbar-title" id="pageTitle">Dashboard</span>
+        <div class="topbar-right">
+          <span class="time-display mono" id="clockDisplay">--:--:--</span>
+        </div>
+      </header>
+
+      <!-- PAGE: DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card blue">
+            <div class="stat-label">Total Peserta Aktif</div>
+            <div class="stat-value" id="statTotal">–</div>
+            <div class="stat-sub">Sedang magang</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Sudah Hadir</div>
+            <div class="stat-value" id="statHadir">–</div>
+            <div class="stat-sub">Hari ini</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Belum Hadir</div>
+            <div class="stat-value" id="statBelum">–</div>
+            <div class="stat-sub">Hari ini</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-label">Terdaftar Face ID</div>
+            <div class="stat-value" id="statFace">–</div>
+            <div class="stat-sub">Wajah terdata</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Kehadiran Hari Ini</div>
+              <div class="card-subtitle" id="dashDate">Memuat...</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↺ Refresh</button>
+          </div>
+          <table id="dashTable">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Institusi</th>
+                <th>Jam Masuk</th>
+                <th>Jam Keluar</th>
+                <th>Confidence</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dashTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 32px; color: var(--text3)">
+                  Memuat data...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE: ABSENSI -->
+      <div class="page" id="page-absensi">
+        <div class="absensi-panel">
+          <h2>Lakukan Absensi</h2>
+          <button class="btn-absen btn-masuk" onclick="doAbsensi('masuk')" id="btnMasuk">
+            <span class="btn-icon">🟢</span>
+            <span class="btn-text">
+              Absen Masuk
+              <small>Buka kamera & scan wajah untuk masuk</small>
+            </span>
+          </button>
+          <button class="btn-absen btn-keluar" onclick="doAbsensi('keluar')" id="btnKeluar">
+            <span class="btn-icon">🔴</span>
+            <span class="btn-text">
+              Absen Keluar
+              <small>Buka kamera & scan wajah untuk keluar</small>
+            </span>
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Panduan Penggunaan</div>
+          </div>
+          <div style="padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+            <div style="background: var(--surface2); border-radius: 10px; padding: 16px">
+              <div style="font-size: 20px; margin-bottom: 8px">📌</div>
+              <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px">
+                Cara Absen Masuk
+              </div>
+              <ol
+                style="font-size: 12px; color: var(--text2); padding-left: 16px; line-height: 1.8"
+              >
+                <li>Klik tombol "Absen Masuk"</li>
+                <li>Jendela kamera akan terbuka</li>
+                <li>Posisikan wajah di tengah frame</li>
+                <li>Tunggu hingga wajah dikenali</li>
+                <li>Absensi otomatis tercatat</li>
+              </ol>
+            </div>
+            <div style="background: var(--surface2); border-radius: 10px; padding: 16px">
+              <div style="font-size: 20px; margin-bottom: 8px">⚠️</div>
+              <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px">Perhatian</div>
+              <ul
+                style="font-size: 12px; color: var(--text2); padding-left: 16px; line-height: 1.8"
+              >
+                <li>Pastikan pencahayaan cukup</li>
+                <li>Lihat langsung ke kamera</li>
+                <li>Jangan menutup wajah dengan tangan</li>
+                <li>Satu kali absen per sesi (pagi/sore)</li>
+                <li>Hubungi admin jika tidak dikenali</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: PESERTA -->
+      <div class="page" id="page-peserta">
+        <div class="section-header">
+          <h2>Data Peserta Magang</h2>
+          <button class="btn btn-primary" onclick="openModalTambah()">+ Tambah Peserta</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Semua Peserta</div>
+            <button class="btn btn-ghost btn-sm" onclick="loadPeserta()">↺ Refresh</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nama</th>
+                <th>Institusi</th>
+                <th>Divisi</th>
+                <th>Periode</th>
+                <th>Face ID</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="pesertaTableBody">
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 32px; color: var(--text3)">
+                  Memuat...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE: REKAP HARIAN -->
+      <div class="page" id="page-rekap">
+        <div class="section-header">
+          <h2>Rekap Absensi Harian</h2>
+          <button class="btn btn-ghost" onclick="loadRekap()">↺ Refresh</button>
+        </div>
+        <div class="stat-grid" id="rekapStat">
+          <div class="stat-card blue">
+            <div class="stat-label">Total Peserta</div>
+            <div class="stat-value" id="rTotal">–</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Hadir</div>
+            <div class="stat-value" id="rHadir">–</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Belum Hadir</div>
+            <div class="stat-value" id="rBelum">–</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-label">Terlambat</div>
+            <div class="stat-value" id="rTerlambat">–</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="rekapTanggal">Hari ini</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Divisi</th>
+                <th>Jam Masuk</th>
+                <th>Jam Keluar</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="rekapTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE: REKAP BULANAN -->
+      <div class="page" id="page-bulanan">
+        <div class="section-header">
+          <h2>Rekap Absensi Bulanan</h2>
+          <button class="btn btn-ghost" onclick="loadBulanan()">↺ Refresh</button>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Institusi</th>
+                <th>Hadir</th>
+                <th>Terlambat</th>
+                <th>Izin</th>
+                <th>Alpha</th>
+                <th>Total Hari</th>
+              </tr>
+            </thead>
+            <tbody id="bulananTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 32px; color: var(--text3)">
+                  Memuat...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL: TAMBAH PESERTA -->
+    <div class="modal-overlay" id="modalTambah">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Tambah Peserta Magang</span>
+          <button class="modal-close" onclick="closeModal('modalTambah')">✕</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Nama Lengkap *</label>
+            <input class="form-input" id="inp_nama" placeholder="Masukkan nama lengkap" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" id="inp_email" type="email" placeholder="email@contoh.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. HP</label>
+            <input class="form-input" id="inp_hp" placeholder="08xxxxxxxxxx" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Institusi / Kampus</label>
+            <input class="form-input" id="inp_institusi" placeholder="Nama kampus/sekolah" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Divisi</label>
+            <select class="form-select" id="inp_divisi">
+              <option value="">— Pilih Divisi —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label"
+              >Tanggal Mulai *
+              <span style="font-weight: 400; color: var(--text3)">(YYYY-MM-DD)</span></label
+            >
+            <input class="form-input" id="inp_mulai" type="date" placeholder="2026-04-23" />
+            <span style="font-size: 10px; color: var(--text3)" id="preview_mulai"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label"
+              >Tanggal Selesai *
+              <span style="font-weight: 400; color: var(--text3)">(YYYY-MM-DD)</span></label
+            >
+            <input class="form-input" id="inp_selesai" type="date" placeholder="2026-07-23" />
+            <span style="font-size: 10px; color: var(--text3)" id="preview_selesai"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('modalTambah')">Batal</button>
+          <button class="btn btn-primary" onclick="submitTambahPeserta()">Simpan Peserta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loadingText">Membuka kamera...</div>
+    </div>
+
+    <script>
+      const API = "http://localhost:5000";
+      const CAMERA_REQUEST_TIMEOUT_MS = 190000;
+
+      // ── CLOCK ──
+      function updateClock() {
+        const now = new Date();
+        document.getElementById("clockDisplay").textContent = now.toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // ── NAVIGATION ──
+      function showPage(name) {
+        document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+        document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + name).classList.add("active");
+        event.currentTarget.classList.add("active");
+        const titles = {
+          dashboard: "Dashboard",
+          absensi: "Absensi",
+          peserta: "Data Peserta",
+          rekap: "Rekap Harian",
+          bulanan: "Rekap Bulanan",
+        };
+        document.getElementById("pageTitle").textContent = titles[name] || name;
+        if (name === "dashboard") loadDashboard();
+        if (name === "peserta") loadPeserta();
+        if (name === "rekap") loadRekap();
+        if (name === "bulanan") loadBulanan();
+      }
+
+      // ── STATUS CHECK ──
+      async function checkStatus() {
+        try {
+          const r = await fetch(`${API}/api/status`);
+          const d = await r.json();
+          document.getElementById("statusDot").classList.add("online");
+          document.getElementById("statusText").textContent =
+            `Online · ${d.jumlah_peserta_terdaftar} wajah`;
+        } catch {
+          document.getElementById("statusDot").classList.remove("online");
+          document.getElementById("statusText").textContent = "Service offline";
+        }
+      }
+      setInterval(checkStatus, 10000);
+      checkStatus();
+
+      // ── DASHBOARD ──
+      async function loadDashboard() {
+        try {
+          const r = await fetch(`${API}/api/rekap/hari-ini`);
+          const d = await r.json();
+          const { summary, data } = d;
+
+          document.getElementById("statTotal").textContent = summary.total_peserta;
+          document.getElementById("statHadir").textContent = summary.sudah_hadir;
+          document.getElementById("statBelum").textContent = summary.belum_hadir;
+          document.getElementById("dashDate").textContent = new Date(
+            summary.tanggal,
+          ).toLocaleDateString("id-ID", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+
+          // Count face registered
+          const rp = await fetch(`${API}/api/peserta`);
+          const dp = await rp.json();
+          const faceCount = dp.data.filter((p) => p.sudah_daftar_wajah).length;
+          document.getElementById("statFace").textContent = faceCount;
+
+          const tbody = document.getElementById("dashTableBody");
+          if (!data.length) {
+            tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada data absensi</p></div></td></tr>`;
+            return;
+          }
+          tbody.innerHTML = data
+            .map(
+              (row) => `
+      <tr>
+        <td><span class="name">${row.nama}</span></td>
+        <td>${row.institusi || "—"}</td>
+        <td class="mono">${row.jam_masuk || '<span style="color:var(--text3)">—</span>'}</td>
+        <td class="mono">${row.jam_keluar || '<span style="color:var(--text3)">—</span>'}</td>
+        <td>
+          ${
+            row.confidence_masuk
+              ? `
+            <div class="confidence-bar">
+              <div class="bar-track"><div class="bar-fill" style="width:${row.confidence_masuk * 100}%;background:${row.confidence_masuk > 0.8 ? "var(--green)" : row.confidence_masuk > 0.6 ? "var(--yellow)" : "var(--red)"}"></div></div>
+              <span class="mono" style="font-size:10px">${(row.confidence_masuk * 100).toFixed(0)}%</span>
+            </div>`
+              : '<span style="color:var(--text3)">—</span>'
+          }
+        </td>
+        <td>${statusBadge(row.status)}</td>
+      </tr>`,
+            )
+            .join("");
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function statusBadge(status) {
+        const map = {
+          hadir: ["green", "✓ Hadir"],
+          terlambat: ["yellow", "⚠ Terlambat"],
+          izin: ["blue", "📝 Izin"],
+          alpha: ["red", "✗ Alpha"],
+          null: ["gray", "— Belum"],
+          undefined: ["gray", "— Belum"],
+        };
+        const [cls, label] = map[status] || ["gray", "—"];
+        return `<span class="badge badge-${cls}">${label}</span>`;
+      }
+
+      // ── ABSENSI ──
+      async function doAbsensi(tipe) {
+        showLoading(`Membuka kamera untuk absen ${tipe}...\nArahkan wajah ke kamera`);
+        const btnId = tipe === "masuk" ? "btnMasuk" : "btnKeluar";
+        document.getElementById(btnId).disabled = true;
+
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), CAMERA_REQUEST_TIMEOUT_MS);
+          const r = await fetch(`${API}/api/absensi/${tipe}`, {
+            method: "POST",
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          const d = await r.json();
+          hideLoading();
+
+          if (d.success) {
+            showToast(
+              "success",
+              `Absensi ${tipe} berhasil!`,
+              `${d.nama} — ${d.waktu} · Confidence: ${(d.confidence * 100).toFixed(0)}%`,
+            );
+            loadDashboard();
+          } else {
+            showToast("error", "Absensi Gagal", d.message || "Wajah tidak dapat dikenali");
+          }
+        } catch (e) {
+          hideLoading();
+          if (e.name === "AbortError") {
+            showToast("error", "Timeout", "Proses terlalu lama. Coba lagi.");
+          } else {
+            showToast(
+              "error",
+              "Error",
+              "Tidak dapat terhubung ke service. Pastikan Python service berjalan.",
+            );
+          }
+        } finally {
+          document.getElementById(btnId).disabled = false;
+        }
+      }
+
+      // ── PESERTA ──
+      async function loadPeserta() {
+        const [rp, rd] = await Promise.all([
+          fetch(`${API}/api/peserta`),
+          fetch(`${API}/api/divisi`),
+        ]);
+        const dp = await rp.json();
+        const dd = await rd.json();
+
+        // Populate divisi dropdown
+        const sel = document.getElementById("inp_divisi");
+        sel.innerHTML = '<option value="">— Pilih Divisi —</option>';
+        dd.data.forEach((d) => (sel.innerHTML += `<option value="${d.id}">${d.nama}</option>`));
+
+        const tbody = document.getElementById("pesertaTableBody");
+        if (!dp.data.length) {
+          tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada peserta</p></div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = dp.data
+          .map(
+            (p, i) => `
+    <tr>
+      <td class="mono" style="color:var(--text3)">${i + 1}</td>
+      <td><span class="name">${p.nama}</span></td>
+      <td>${p.institusi || "—"}</td>
+      <td>${p.divisi || "—"}</td>
+      <td style="font-size:11px">
+        ${p.tanggal_mulai || "—"} s/d<br>${p.tanggal_selesai || "—"}
+      </td>
+      <td>
+        ${
+          p.sudah_daftar_wajah
+            ? `<span class="badge badge-green">✓ Terdaftar</span>`
+            : `<span class="badge badge-red">✗ Belum</span>`
+        }
+      </td>
+      <td>${statusBadge(p.status)}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-success btn-sm" onclick="daftarWajah(${p.id},'${p.nama}')">
+            👁 ${p.sudah_daftar_wajah ? "Update" : "Daftar"} Wajah
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="hapusPeserta(${p.id},'${p.nama}')">🗑</button>
+        </div>
+      </td>
+    </tr>`,
+          )
+          .join("");
+      }
+
+      async function daftarWajah(id, nama) {
+        if (!confirm(`Daftarkan/update wajah untuk:\n${nama}\n\nKamera akan terbuka. Lanjutkan?`))
+          return;
+        showLoading(`Registrasi wajah untuk ${nama}...\nIkuti panduan di jendela kamera`);
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), CAMERA_REQUEST_TIMEOUT_MS);
+          const r = await fetch(`${API}/api/registrasi-wajah/${id}`, {
+            method: "POST",
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          const d = await r.json();
+          hideLoading();
+          if (d.success) {
+            showToast("success", "Registrasi Berhasil!", d.message);
+            loadPeserta();
+          } else {
+            showToast("error", "Registrasi Gagal", d.message);
+          }
+        } catch (e) {
+          hideLoading();
+          if (e.name === "AbortError") {
+            showToast("error", "Timeout", "Proses terlalu lama. Coba lagi.");
+          } else {
+            showToast(
+              "error",
+              "Error",
+              "Tidak dapat terhubung ke service. Pastikan Python service berjalan.",
+            );
+          }
+        }
+      }
+
+      async function hapusPeserta(id, nama) {
+        if (!confirm(`Hapus peserta:\n${nama}\n\nData absensi juga akan terhapus!`)) return;
+        await fetch(`${API}/api/peserta/${id}`, { method: "DELETE" });
+        showToast("success", "Peserta dihapus", nama);
+        loadPeserta();
+      }
+
+      function openModalTambah() {
+        document.getElementById("modalTambah").classList.add("open");
+        // Set default dates dalam format YYYY-MM-DD
+        const today = new Date();
+        const fmt = (d) => d.toISOString().split("T")[0];
+        const threeMonths = new Date(today);
+        threeMonths.setMonth(threeMonths.getMonth() + 3);
+
+        const inpMulai = document.getElementById("inp_mulai");
+        const inpSelesai = document.getElementById("inp_selesai");
+
+        inpMulai.value = fmt(today);
+        inpSelesai.value = fmt(threeMonths);
+
+        // Preview tanggal agar user tahu nilai yang terbaca
+        const updatePreview = (inputId, previewId) => {
+          const val = getDateValue(inputId);
+          const el = document.getElementById(previewId);
+          if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+            const d = new Date(val + "T00:00:00");
+            el.textContent =
+              "✓ " +
+              d.toLocaleDateString("id-ID", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+            el.style.color = "var(--green)";
+          } else {
+            el.textContent = val ? `⚠ Format tidak dikenal: "${val}"` : "";
+            el.style.color = "var(--yellow)";
+          }
+        };
+
+        inpMulai.oninput = () => updatePreview("inp_mulai", "preview_mulai");
+        inpSelesai.oninput = () => updatePreview("inp_selesai", "preview_selesai");
+
+        updatePreview("inp_mulai", "preview_mulai");
+        updatePreview("inp_selesai", "preview_selesai");
+      }
+
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+      }
+
+      function getDateValue(inputId) {
+        const el = document.getElementById(inputId);
+        let val = el.value; // bisa "2026-04-23" atau "23-Apr-2026" tergantung browser/OS
+
+        // Jika sudah format YYYY-MM-DD, langsung return
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+
+        // Coba parse format lain (DD-Mon-YYYY, DD/MM/YYYY, MM/DD/YYYY)
+        const parsed = new Date(val);
+        if (!isNaN(parsed.getTime())) {
+          const y = parsed.getFullYear();
+          const m = String(parsed.getMonth() + 1).padStart(2, "0");
+          const d = String(parsed.getDate()).padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        }
+
+        return val; // kembalikan apa adanya, biarkan validasi tangani
+      }
+
+      async function submitTambahPeserta() {
+        const nama = document.getElementById("inp_nama").value.trim();
+        const mulai = getDateValue("inp_mulai");
+        const selesai = getDateValue("inp_selesai");
+
+        // Validasi satu per satu agar pesan lebih jelas
+        if (!nama) {
+          showToast("error", "Validasi", "Nama lengkap wajib diisi");
+          return;
+        }
+        if (!mulai || !/^\d{4}-\d{2}-\d{2}$/.test(mulai)) {
+          showToast(
+            "error",
+            "Validasi",
+            `Tanggal mulai tidak valid (didapat: "${document.getElementById("inp_mulai").value}"). Pilih ulang tanggal.`,
+          );
+          return;
+        }
+        if (!selesai || !/^\d{4}-\d{2}-\d{2}$/.test(selesai)) {
+          showToast(
+            "error",
+            "Validasi",
+            `Tanggal selesai tidak valid (didapat: "${document.getElementById("inp_selesai").value}"). Pilih ulang tanggal.`,
+          );
+          return;
+        }
+
+        const body = {
+          nama,
+          email: document.getElementById("inp_email").value,
+          no_hp: document.getElementById("inp_hp").value,
+          institusi: document.getElementById("inp_institusi").value,
+          divisi_id: document.getElementById("inp_divisi").value || null,
+          tanggal_mulai: mulai,
+          tanggal_selesai: selesai,
+        };
+
+        try {
+          const r = await fetch(`${API}/api/peserta`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const d = await r.json();
+          if (d.success) {
+            closeModal("modalTambah");
+            // Reset form
+            [
+              "inp_nama",
+              "inp_email",
+              "inp_hp",
+              "inp_institusi",
+              "inp_mulai",
+              "inp_selesai",
+            ].forEach((id) => (document.getElementById(id).value = ""));
+            document.getElementById("inp_divisi").value = "";
+            showToast("success", "Peserta Ditambahkan!", `${nama} berhasil didaftarkan`);
+            loadPeserta();
+          } else {
+            showToast("error", "Gagal Menyimpan", d.message || "Terjadi kesalahan di server");
+          }
+        } catch (e) {
+          showToast(
+            "error",
+            "Error Koneksi",
+            "Tidak dapat terhubung ke service. Pastikan Python service berjalan.",
+          );
+        }
+      }
+
+      // ── REKAP ──
+      async function loadRekap() {
+        const r = await fetch(`${API}/api/rekap/hari-ini`);
+        const d = await r.json();
+        const { summary, data } = d;
+
+        document.getElementById("rTotal").textContent = summary.total_peserta;
+        document.getElementById("rHadir").textContent = summary.sudah_hadir;
+        document.getElementById("rBelum").textContent = summary.belum_hadir;
+        document.getElementById("rTerlambat").textContent = data.filter(
+          (r) => r.status === "terlambat",
+        ).length;
+        document.getElementById("rekapTanggal").textContent = new Date(
+          summary.tanggal,
+        ).toLocaleDateString("id-ID", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+
+        const tbody = document.getElementById("rekapTableBody");
+        tbody.innerHTML = data
+          .map(
+            (row) => `
+    <tr>
+      <td><span class="name">${row.nama}</span></td>
+      <td>${row.divisi || "—"}</td>
+      <td class="mono">${row.jam_masuk || '<span style="color:var(--text3)">—</span>'}</td>
+      <td class="mono">${row.jam_keluar || '<span style="color:var(--text3)">—</span>'}</td>
+      <td>${statusBadge(row.status)}</td>
+    </tr>`,
+          )
+          .join("");
+      }
+
+      async function loadBulanan() {
+        const r = await fetch(`${API}/api/rekap/bulanan`);
+        const d = await r.json();
+        const tbody = document.getElementById("bulananTableBody");
+        tbody.innerHTML = d.data
+          .map(
+            (row) => `
+    <tr>
+      <td><span class="name">${row.nama}</span></td>
+      <td>${row.institusi || "—"}</td>
+      <td><span class="badge badge-green">${row.hadir}</span></td>
+      <td><span class="badge badge-yellow">${row.terlambat}</span></td>
+      <td><span class="badge badge-blue">${row.izin}</span></td>
+      <td><span class="badge badge-red">${row.alpha}</span></td>
+      <td class="mono">${row.total_hari}</td>
+    </tr>`,
+          )
+          .join("");
+      }
+
+      // ── TOAST ──
+      function showToast(type, title, msg) {
+        const container = document.getElementById("toastContainer");
+        const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
+        const el = document.createElement("div");
+        el.className = `toast ${type}`;
+        el.innerHTML = `
+    <span class="toast-icon">${icons[type] || "ℹ️"}</span>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-msg">${msg}</div>
+    </div>`;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 4500);
+      }
+
+      // ── LOADING ──
+      function showLoading(text) {
+        document.getElementById("loadingText").innerHTML = text.replace("\n", "<br>");
+        document.getElementById("loadingOverlay").classList.add("open");
+      }
+      function hideLoading() {
+        document.getElementById("loadingOverlay").classList.remove("open");
+      }
+
+      // ── INIT ──
+      loadDashboard();
+    </script>
+  </body>
+</html>

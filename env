@@ -1,0 +1,16 @@
+# Konfigurasi Database MySQL
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=absensi_db
+
+# Konfigurasi Service
+FLASK_PORT=5000
+FLASK_DEBUG=True
+
+# Konfigurasi Face Recognition
+CONFIDENCE_THRESHOLD=0.55
+FOTO_DIR=foto_absensi
+
+# Konfigurasi Kamera
+CAMERA_INDEX=0
