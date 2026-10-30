@@ -385,8 +385,8 @@ def serve_foto(filename):
 # ============================================================
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 5000))
-    print(f"\n🚀 Server berjalan di: http://localhost:{port}")
-    print(f"📋 Dashboard admin: http://localhost:{port}/")
-    print(f"🔌 PHP dapat memanggil API di: http://localhost:{port}/api/\n")
-    # use_reloader=False wajib agar threading OpenCV tidak konflik
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False, threaded=True)
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    host = os.getenv('FLASK_HOST', '127.0.0.1')
+
+    app.run(host=host, port=port, debug=debug_mode,
+            use_reloader=False, threaded=True)
